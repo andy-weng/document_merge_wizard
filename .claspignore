@@ -1,0 +1,11 @@
+# Ignore all files in node_modules and build folders
+node_modules/
+build/
+
+# Ignore temporary or system files
+*.log
+*.tmp
+.DS_Store
+
+# Ignore the .clasp.json configuration file
+.clasp.json

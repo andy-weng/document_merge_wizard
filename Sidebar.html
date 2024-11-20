@@ -1,0 +1,549 @@
+<!-- Sidebar.html -->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+      }
+      h2 {
+        margin-top: 0;
+      }
+      h3 {
+        margin-bottom: 10px;
+      }
+      label {
+        display: block;
+        margin-top: 10px;
+      }
+      input[type="text"], select, textarea {
+        width: 100%;
+        padding: 8px;
+        margin-top: 5px;
+        box-sizing: border-box;
+      }
+      .hidden {
+        display: none;
+      }
+      button {
+        padding: 10px 15px;
+        margin-top: 20px;
+        margin-right: 10px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      #loading {
+        display: none;
+        margin-top: 20px;
+      }
+      #results {
+        margin-top: 20px;
+      }
+      .step {
+        display: none;
+      }
+      .step.active {
+        display: block;
+      }
+      .progress-bar {
+        width: 100%;
+        background-color: #f3f3f3;
+        border-radius: 5px;
+        margin-top: 20px;
+      }
+      .progress-bar-fill {
+        height: 20px;
+        width: 0%;
+        background-color: #4caf50;
+        border-radius: 5px;
+        text-align: center;
+        color: white;
+        line-height: 20px;
+      }
+      .instructions {
+        background-color: #e7f3fe;
+        border-left: 6px solid #2196F3;
+        padding: 10px;
+        margin-bottom: 20px;
+      }
+      .placeholder-buttons {
+        margin-top: 10px;
+      }
+      .placeholder-button {
+        padding: 5px 10px;
+        margin: 2px;
+        background-color: #2196F3;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+      }
+      .placeholder-button:hover {
+        background-color: #0b7dda;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Document Merge Wizard</h2>
+    <div class="instructions">
+      <p>Welcome to the Document Merge Wizard! Follow the steps below to generate and/or email your documents.</p>
+    </div>
+    <div id="wizard">
+      <!-- Step 1: Select Action -->
+      <div class="step active" id="step-1">
+        <h3>Step 1: Select Action</h3>
+        <p>Please choose the action you want to perform:</p>
+        <label>
+          <input type="radio" name="action" value="email" checked>
+          Generate and Email Letters
+        </label>
+        <label>
+          <input type="radio" name="action" value="save">
+          Generate and Save Google Docs Only
+        </label>
+        <button type="button" onclick="nextStep()">Next</button>
+      </div>
+
+      <!-- Step 2: Configure Templates, Folders, and Filename -->
+      <div class="step" id="step-2">
+        <h3>Step 2: Configure Templates and Folders</h3>
+        <p>Provide the necessary links and define your filename format.</p>
+        <label for="templateLink">Template Document Link:</label>
+        <input type="text" id="templateLink" name="templateLink" placeholder="Paste the complete Template Document URL here" required>
+
+        <label for="folderLink">Destination Folder Link:</label>
+        <input type="text" id="folderLink" name="folderLink" placeholder="Paste the complete Google Drive Folder URL here" required>
+
+        <label for="filenameFormat">Filename Format:</label>
+        <textarea id="filenameFormat" name="filenameFormat" placeholder="Enter filename format using placeholders, e.g., {{Last}} - {{Department}} - {{Today's Date}}" rows="2" required></textarea>
+        <div class="placeholder-buttons" id="placeholderButtons">
+          <!-- Placeholder buttons will be populated here -->
+        </div>
+        <small>Use {{Today's Date}} to insert the current date in YYYY-MM-DD format.</small>
+
+        <button type="button" onclick="prevStep()">Back</button>
+        <button type="button" onclick="nextStep()">Next</button>
+      </div>
+
+      <!-- Step 3: Email Configuration (Conditional) -->
+      <div class="step" id="step-3">
+        <h3>Step 3: Email Configuration</h3>
+        <p>Select your email draft and specify the columns for email fields.</p>
+        <label for="emailDraft">Select Email Draft:</label>
+        <select id="emailDraft" name="emailDraft" required>
+          <option value="">Loading drafts...</option>
+        </select>
+
+        <label for="emailField">Email Column Letter:</label>
+        <input type="text" id="emailField" name="emailField" placeholder="e.g., L" required>
+
+        <label for="ccField">CC Column Letter (Optional):</label>
+        <input type="text" id="ccField" name="ccField" placeholder="e.g., M">
+
+        <label for="bccField">BCC Column Letter (Optional):</label>
+        <input type="text" id="bccField" name="bccField" placeholder="e.g., N">
+
+        <label for="attachmentsField">Attachments Column Letter (Optional):</label>
+        <input type="text" id="attachmentsField" name="attachmentsField" placeholder="e.g., O">
+
+        <small>Specify the column letters where the Email, CC, BCC, and Attachments are located.</small>
+
+        <button type="button" onclick="prevStep()">Back</button>
+        <button type="button" onclick="nextStep()">Next</button>
+      </div>
+
+      <!-- Step 4: Test Merge Configuration (Conditional) -->
+      <div class="step" id="step-4">
+        <h3>Step 4: Test Merge Configuration</h3>
+        <p>Optionally send a test merge email to verify your setup.</p>
+        <label>
+          <input type="checkbox" id="testMode" name="testMode" onchange="toggleTestEmail()">
+          Send a Test Merge Email
+        </label>
+        <div id="testEmailSection" class="hidden">
+          <label for="testEmail">Test Email Address:</label>
+          <input type="text" id="testEmail" name="testEmail" placeholder="Enter your email address">
+        </div>
+        <button type="button" onclick="prevStep()">Back</button>
+        <button type="button" onclick="nextStep()">Next</button>
+      </div>
+
+      <!-- Step 5: Review and Execute -->
+      <div class="step" id="step-5">
+        <h3>Step 5: Review and Execute</h3>
+        <p>Review your settings below before executing the merge.</p>
+        <div id="review">
+          <!-- Review details will be populated here -->
+        </div>
+        <button type="button" onclick="prevStep()">Back</button>
+        <button type="button" onclick="startMerge()">Execute</button>
+      </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loading" style="display:none;">
+      <p>Processing... Please wait.</p>
+      <div class="progress-bar">
+        <div class="progress-bar-fill" id="progressBarFill">0%</div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results"></div>
+
+    <script>
+      let currentStep = 1;
+      const totalSteps = 5;
+      let sheetHeaders = [];
+      let rowsToProcess = 0;
+      let currentAction = ''; // Added Global Variable for Action
+
+      // Initialize the wizard
+      document.addEventListener('DOMContentLoaded', function() {
+        populateDrafts();
+        fetchSheetHeaders();
+        addActionChangeListener();
+      });
+
+      /**
+       * Fetches sheet headers and populates the placeholder picker.
+       */
+      function fetchSheetHeaders() {
+        google.script.run.withSuccessHandler(function(headers) {
+          sheetHeaders = headers;
+          populatePlaceholderButtons();
+        }).getSheetHeaders();
+      }
+
+      /**
+       * Populates the placeholder buttons based on sheet headers, excluding specified columns.
+       */
+      function populatePlaceholderButtons() {
+        const excluded = ['email', 'cc', 'bcc', 'attachments'];
+        const placeholderButtonsDiv = document.getElementById('placeholderButtons');
+        placeholderButtonsDiv.innerHTML = '';
+        sheetHeaders.forEach(function(header) {
+          if (!excluded.includes(header.toLowerCase())) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'placeholder-button';
+            button.textContent = header;
+            button.onclick = function() {
+              insertAtCursor('filenameFormat', `{{${header}}}`);
+            };
+            placeholderButtonsDiv.appendChild(button);
+          }
+        });
+        // Add Today's Date button
+        const dateButton = document.createElement('button');
+        dateButton.type = 'button';
+        dateButton.className = 'placeholder-button';
+        dateButton.textContent = "Today's Date";
+        dateButton.onclick = function() {
+          insertAtCursor('filenameFormat', `{{Today's Date}}`);
+        };
+        placeholderButtonsDiv.appendChild(dateButton);
+      }
+
+      /**
+       * Inserts text at the cursor's current position in a textarea.
+       * @param {string} textareaId - The ID of the textarea.
+       * @param {string} text - The text to insert.
+       */
+      function insertAtCursor(textareaId, text) {
+        const textarea = document.getElementById(textareaId);
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const before = textarea.value.substring(0, start);
+        const after = textarea.value.substring(end, textarea.value.length);
+        textarea.value = before + text + after;
+        textarea.focus();
+        textarea.selectionStart = textarea.selectionEnd = start + text.length;
+      }
+
+      /**
+       * Populates the email drafts dropdown by fetching from the server.
+       */
+      function populateDrafts() {
+        google.script.run.withSuccessHandler(function(drafts) {
+          const draftSelect = document.getElementById('emailDraft');
+          draftSelect.innerHTML = '<option value="">-- Select a Draft --</option>';
+          drafts.forEach(function(draft) {
+            draftSelect.innerHTML += `<option value="${draft.id}">${draft.subject}</option>`;
+          });
+        }).getGmailDrafts();
+      }
+
+      /**
+       * Adds a listener to the action radio buttons to handle conditional steps.
+       */
+      function addActionChangeListener() {
+        const actionRadios = document.querySelectorAll('input[name="action"]');
+        actionRadios.forEach(radio => {
+          radio.addEventListener('change', function() {
+            const action = this.value;
+            currentAction = action; // Update Global Variable
+            if (action === 'save') {
+              // Hide steps 3 and 4
+              document.getElementById('step-3').style.display = 'none';
+              document.getElementById('step-4').style.display = 'none';
+            } else {
+              // Show steps 3 and 4
+              document.getElementById('step-3').style.display = 'block';
+              document.getElementById('step-4').style.display = 'block';
+            }
+          });
+        });
+      }
+
+      /**
+       * Moves to the next step in the wizard.
+       */
+      function nextStep() {
+        if (currentStep < totalSteps) {
+          // Validate current step before moving forward
+          if (!validateStep(currentStep)) return;
+
+          // Handle conditional steps based on action
+          const action = document.querySelector('input[name="action"]:checked').value;
+          currentAction = action; // Update Global Variable
+
+          if (action === 'save' && currentStep === 2) {
+            // Skip steps 3 and 4
+            document.getElementById(`step-${currentStep}`).classList.remove('active');
+            currentStep = 5;
+            document.getElementById(`step-${currentStep}`).classList.add('active');
+            populateReview();
+            return;
+          }
+
+          document.getElementById(`step-${currentStep}`).classList.remove('active');
+          currentStep++;
+          document.getElementById(`step-${currentStep}`).classList.add('active');
+          if (currentStep === 5) {
+            populateReview();
+          }
+        }
+      }
+
+      /**
+       * Moves to the previous step in the wizard.
+       */
+      function prevStep() {
+        if (currentStep > 1) {
+          // Handle conditional steps based on action
+          const action = document.querySelector('input[name="action"]:checked').value;
+          currentAction = action; // Update Global Variable
+
+          if (action === 'save' && currentStep === 5) {
+            // Move back to step 2
+            document.getElementById(`step-${currentStep}`).classList.remove('active');
+            currentStep = 2;
+            document.getElementById(`step-${currentStep}`).classList.add('active');
+            return;
+          }
+
+          document.getElementById(`step-${currentStep}`).classList.remove('active');
+          currentStep--;
+          document.getElementById(`step-${currentStep}`).classList.add('active');
+        }
+      }
+
+      /**
+       * Toggles the visibility of the test email input field.
+       */
+      function toggleTestEmail() {
+        const testMode = document.getElementById('testMode').checked;
+        const testEmailSection = document.getElementById('testEmailSection');
+        if (testMode) {
+          testEmailSection.classList.remove('hidden');
+          document.getElementById('testEmail').required = true;
+        } else {
+          testEmailSection.classList.add('hidden');
+          document.getElementById('testEmail').required = false;
+        }
+      }
+
+      /**
+       * Validates the current step before proceeding.
+       * @param {number} step - The current step number.
+       * @returns {boolean} True if valid, false otherwise.
+       */
+      function validateStep(step) {
+        let isValid = true;
+        const stepDiv = document.getElementById(`step-${step}`);
+        const inputs = stepDiv.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+          if (!input.checkValidity()) {
+            isValid = false;
+            input.reportValidity();
+          }
+        });
+        return isValid;
+      }
+
+      /**
+       * Populates the review step with the selected options.
+       */
+      function populateReview() {
+        const action = document.querySelector('input[name="action"]:checked').value;
+        const templateLink = document.getElementById('templateLink').value.trim();
+        const folderLink = document.getElementById('folderLink').value.trim();
+        const filenameFormat = document.getElementById('filenameFormat').value.trim();
+        const emailDraftId = document.getElementById('emailDraft').value;
+        const emailField = document.getElementById('emailField').value.trim();
+        const ccField = document.getElementById('ccField').value.trim();
+        const bccField = document.getElementById('bccField').value.trim();
+        const attachmentsField = document.getElementById('attachmentsField').value.trim();
+        const testMode = document.getElementById('testMode').checked;
+        const testEmail = document.getElementById('testEmail').value.trim();
+
+        // Fetch the number of rows to be processed
+        google.script.run.withSuccessHandler(function(count) {
+          rowsToProcess = count;
+          let reviewHtml = `<p><strong>Action:</strong> ${action === 'email' ? 'Generate and Email Letters' : 'Generate and Save Google Docs Only'}</p>`;
+          reviewHtml += `<p><strong>Template Document Link:</strong> <a href="${templateLink}" target="_blank">View Template</a></p>`;
+          reviewHtml += `<p><strong>Destination Folder Link:</strong> <a href="${folderLink}" target="_blank">View Folder</a></p>`;
+          reviewHtml += `<p><strong>Filename Format:</strong> ${filenameFormat}</p>`;
+          reviewHtml += `<p><strong>Number of Rows Detected for Merge:</strong> ${rowsToProcess}</p>`;
+          if (action === 'email') {
+            const draftSubject = document.querySelector('#emailDraft option[value="'+emailDraftId+'"]').text;
+            reviewHtml += `<p><strong>Email Draft Subject:</strong> ${draftSubject}</p>`;
+            reviewHtml += `<p><strong>Email Column Letter:</strong> ${emailField}</p>`;
+            if (ccField) {
+              reviewHtml += `<p><strong>CC Column Letter:</strong> ${ccField}</p>`;
+            }
+            if (bccField) {
+              reviewHtml += `<p><strong>BCC Column Letter:</strong> ${bccField}</p>`;
+            }
+            if (attachmentsField) {
+              reviewHtml += `<p><strong>Attachments Column Letter:</strong> ${attachmentsField}</p>`;
+            }
+          }
+          if (testMode) {
+            reviewHtml += `<p><strong>Test Mode:</strong> Enabled</p>`;
+            reviewHtml += `<p><strong>Test Email Address:</strong> ${testEmail}</p>`;
+          }
+
+          document.getElementById('review').innerHTML = reviewHtml;
+        }).getRowsToProcess();
+      }
+
+      /**
+       * Starts the merge process by collecting all inputs and calling the server-side function.
+       */
+      function startMerge() {
+        const action = document.querySelector('input[name="action"]:checked').value;
+        const templateLink = document.getElementById('templateLink').value.trim();
+        const folderLink = document.getElementById('folderLink').value.trim();
+        const filenameFormat = document.getElementById('filenameFormat').value.trim();
+        const emailDraftId = document.getElementById('emailDraft').value;
+        const emailField = document.getElementById('emailField').value.trim();
+        const ccField = document.getElementById('ccField').value.trim();
+        const bccField = document.getElementById('bccField').value.trim();
+        const attachmentsField = document.getElementById('attachmentsField').value.trim();
+        const testMode = document.getElementById('testMode').checked;
+        const testEmail = document.getElementById('testEmail').value.trim();
+
+        if (testMode && !testEmail) {
+          alert('Please enter a test email address.');
+          return;
+        }
+
+        // Show loading indicator
+        document.getElementById('wizard').style.display = 'none';
+        document.getElementById('loading').style.display = 'block';
+
+        // Initialize progress bar
+        updateProgressBar(0);
+
+        // Prepare options object
+        const options = {
+          action: action,
+          templateLink: templateLink,
+          folderLink: folderLink,
+          emailDraftId: emailDraftId,
+          testMode: testMode,
+          testEmail: testEmail,
+          emailField: emailField,
+          ccField: ccField,
+          bccField: bccField,
+          attachmentsField: attachmentsField,
+          filenameFormat: filenameFormat
+        };
+
+        // Update global action variable
+        currentAction = action;
+
+        // Call server-side function
+        google.script.run.withSuccessHandler(handleResponse)
+                         .withFailureHandler(handleError)
+                         .executeMergeAction(options);
+
+        // Note: Accurate progress updates based on server-side processing are complex.
+        // Here, we keep the progress bar simple.
+      }
+
+      /**
+       * Handles the response from the server-side function.
+       * @param {Object} response - The response object from the server.
+       */
+      function handleResponse(response) {
+        document.getElementById('loading').style.display = 'none';
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = '';
+
+        if (response.success) {
+          resultsDiv.innerHTML = `<p style="color: green;">Merge process completed successfully!</p>`;
+          if (response.results && response.results.length > 0) {
+            const ul = document.createElement('ul');
+            response.results.forEach(function(result) {
+              if (result.status.startsWith('Success') || result.status.startsWith('Saved')) {
+                ul.innerHTML += `<li>Row ${result.row}: ${currentAction === 'email' ? 'Email sent to ' + result.emailSentTo : 'Document saved as "' + result.fileName + '"'}</li>`;
+              } else if (result.status.startsWith('Error')) {
+                ul.innerHTML += `<li>Row ${result.row}: ${result.status}</li>`;
+              }
+            });
+            resultsDiv.appendChild(ul);
+          }
+          // **Summary Report Link Removed**
+        } else {
+          resultsDiv.innerHTML = `<p style="color: red;">Error: ${response.message}</p>`;
+        }
+
+        // Reset wizard
+        document.getElementById('wizard').style.display = 'block';
+      }
+
+      /**
+       * Handles errors from the server-side function.
+       * @param {Object} error - The error object.
+       */
+      function handleError(error) {
+        document.getElementById('loading').style.display = 'none';
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+        document.getElementById('wizard').style.display = 'block';
+      }
+
+      /**
+       * Updates the progress bar to a specific percentage.
+       * @param {number} percent - The percentage to update the progress bar to.
+       */
+      function updateProgressBar(percent) {
+        const progressBarFill = document.getElementById('progressBarFill');
+        progressBarFill.style.width = `${percent}%`;
+        progressBarFill.textContent = `${percent}%`;
+      }
+    </script>
+  </body>
+</html>
